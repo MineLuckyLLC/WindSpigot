@@ -14,6 +14,8 @@ import java.util.zip.GZIPOutputStream;
 
 public class NBTCompressedStreamTools {
 
+	public static NBTTagCompound readNBT(InputStream inputstream) throws IOException { return a(inputstream); } // PandaSpigot - OBFHELPE
+
 	public static NBTTagCompound a(InputStream inputstream) throws IOException {
 		DataInputStream datainputstream = new DataInputStream(
 				new BufferedInputStream(new GZIPInputStream(inputstream)));
@@ -28,6 +30,8 @@ public class NBTCompressedStreamTools {
 
 		return nbttagcompound;
 	}
+
+	public static void writeNBT(NBTTagCompound nbttagcompound, OutputStream outputstream) throws IOException { a(nbttagcompound, outputstream); } // PandaSpigot - OBFHELPER
 
 	public static void a(NBTTagCompound nbttagcompound, OutputStream outputstream) throws IOException {
 		DataOutputStream dataoutputstream = new DataOutputStream(

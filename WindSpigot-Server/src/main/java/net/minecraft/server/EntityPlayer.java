@@ -1,13 +1,10 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-
-// CraftBukkit start
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.mojang.authlib.GameProfile;
+import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.bukkit.Bukkit;
 import org.bukkit.WeatherType;
 import org.bukkit.craftbukkit.CraftWorld;
@@ -16,14 +13,8 @@ import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
-// CraftBukkit end
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.mojang.authlib.GameProfile;
-
-import io.netty.buffer.Unpooled;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.util.*;
 
 public class EntityPlayer extends EntityHuman implements ICrafting {
 
@@ -44,6 +35,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
 	public int lastSentExp = -99999999;
 	public int invulnerableTicks = 60;
 	private EntityHuman.EnumChatVisibility bR;
+	private boolean bS = true;
 	private long bT = System.currentTimeMillis();
 	private Entity bU = null;
 	private int containerCounter;
@@ -1131,7 +1123,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
 		}
 		// PaperSpigot end
 		this.bR = packetplayinsettings.c();
-		boolean bS = packetplayinsettings.d();
+		this.bS = packetplayinsettings.d();
 		this.getDataWatcher().watch(10, Byte.valueOf((byte) packetplayinsettings.e()));
 	}
 

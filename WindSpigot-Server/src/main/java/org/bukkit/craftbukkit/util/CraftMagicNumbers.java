@@ -1,11 +1,7 @@
 package org.bukkit.craftbukkit.util;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.google.common.collect.Lists;
+import net.minecraft.server.*;
 import org.bukkit.Achievement;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
@@ -15,22 +11,18 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.StringUtil;
 
-import com.google.common.collect.Lists;
-
-import net.minecraft.server.Block;
-import net.minecraft.server.Blocks;
-import net.minecraft.server.Item;
-import net.minecraft.server.MinecraftKey;
-import net.minecraft.server.MojangsonParseException;
-import net.minecraft.server.MojangsonParser;
-import net.minecraft.server.StatisticList;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressWarnings("deprecation")
 public final class CraftMagicNumbers implements UnsafeValues {
 	public static final UnsafeValues INSTANCE = new CraftMagicNumbers();
 
-	private CraftMagicNumbers() {
-	}
+	private CraftMagicNumbers() {}
 
 	public static Block getBlock(org.bukkit.block.Block block) {
 		return getBlock(block.getType());
@@ -54,7 +46,8 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
 	public static Item getItem(Material material) {
 		// TODO: Don't use ID
-		return Item.getById(material.getId());
+		Item item = Item.getById(material.getId());
+		return item;
 	}
 
 	@Deprecated
@@ -93,13 +86,13 @@ public final class CraftMagicNumbers implements UnsafeValues {
 
 	@Override
 	public Material getMaterialFromInternalName(String name) {
-		return getMaterial(Item.REGISTRY.get(new MinecraftKey(name)));
+		return getMaterial((Item) Item.REGISTRY.get(new MinecraftKey(name)));
 	}
 
 	@Override
 	public List<String> tabCompleteInternalMaterialName(String token, List<String> completions) {
 		ArrayList<String> results = Lists.newArrayList();
-		for (MinecraftKey key : Item.REGISTRY.keySet()) {
+		for (MinecraftKey key : (Set<MinecraftKey>)Item.REGISTRY.keySet()) {
 			results.add(key.toString());
 		}
 		return StringUtil.copyPartialMatches(token, results, completions);
@@ -110,7 +103,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
 		net.minecraft.server.ItemStack nmsStack = CraftItemStack.asNMSCopy(stack);
 
 		try {
-			nmsStack.setTag(MojangsonParser.parse(arguments));
+			nmsStack.setTag((NBTTagCompound) MojangsonParser.parse(arguments));
 		} catch (MojangsonParseException ex) {
 			Logger.getLogger(CraftMagicNumbers.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -142,4 +135,34 @@ public final class CraftMagicNumbers implements UnsafeValues {
 		}
 		return matches;
 	}
+
+	// PandaSpigot start
+	@Override
+	public byte[] serializeItem(ItemStack item) {
+		com.google.common.base.Preconditions.checkNotNull(item, "null cannot be serialized");
+		com.google.common.base.Preconditions.checkArgument(item.getType() != Material.AIR, "air cannot be serialized");
+
+		java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+		NBTTagCompound compound = (item instanceof CraftItemStack ? ((CraftItemStack) item).handle : CraftItemStack.asNMSCopy(item)).save(new NBTTagCompound());
+		try {
+			net.minecraft.server.NBTCompressedStreamTools.writeNBT(compound, outputStream);
+		} catch (java.io.IOException ex) {
+			throw new RuntimeException(ex);
+		}
+		return outputStream.toByteArray();
+	}
+
+	@Override
+	public ItemStack deserializeItem(byte[] data) {
+		com.google.common.base.Preconditions.checkNotNull(data, "null cannot be deserialized");
+		com.google.common.base.Preconditions.checkArgument(data.length > 0, "cannot deserialize nothing");
+
+		try {
+			NBTTagCompound compound = net.minecraft.server.NBTCompressedStreamTools.readNBT(new java.io.ByteArrayInputStream(data));
+			return CraftItemStack.asCraftMirror(net.minecraft.server.ItemStack.createStack(compound));
+		} catch (java.io.IOException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	// PandaSpigot end
 }
